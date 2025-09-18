@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="pt-BR">
+<html lang="en">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -14,11 +14,11 @@
 </head>
 <body>
   <div id="game-container"></div>
-  <div class="instructions">Teclas: ← → p mover / Espaço p pular / T para trocar skin • Mobile: toque para pular</div>
+  <div class="instructions">Keys: ← → to move / Space to jump / T to change skin • Mobile: tap to jump</div>
 
 <script>
 // Turbo Tuga — Phaser 3 single-file game
-// Características: múltiplas fases, cenas, moedas, sons sintetizados, controles teclado + toque, HUD, somas, salvar highscore.
+// Features: multiple levels, scenes, coins, synthesized sounds, keyboard + touch controls, HUD, save highscore.
 
 const GAME_WIDTH = 800;
 const GAME_HEIGHT = 480;
@@ -26,15 +26,12 @@ const GAME_HEIGHT = 480;
 class BootScene extends Phaser.Scene {
   constructor(){ super('BootScene'); }
   preload(){
-    // gerar texturas simples sem assets externos
     this.textures.generate('tuga', { data: ['.111.','11111','11111','11111','.111.'], pixelWidth: 12 });
     this.textures.generate('coin', { data: ['.222.','.222.','22222','.222.','.222.'], pixelWidth:8 });
     this.textures.generate('tile', { data: ['33333','33333','33333','33333'], pixelWidth:16 });
     this.textures.generate('enemy', { data: ['.4.','.444','.4.'], pixelWidth:20 });
   }
-  create(){
-    this.scene.start('MenuScene');
-  }
+  create(){ this.scene.start('MenuScene'); }
 }
 
 class MenuScene extends Phaser.Scene {
@@ -42,17 +39,16 @@ class MenuScene extends Phaser.Scene {
   create(){
     this.add.rectangle(GAME_WIDTH/2, GAME_HEIGHT/2, GAME_WIDTH, GAME_HEIGHT, 0x071127);
     this.add.text(GAME_WIDTH/2, 80, 'Turbo Tuga', { fontSize: '48px', fontFamily:'Arial', color:'#ffd166' }).setOrigin(0.5);
-    this.add.text(GAME_WIDTH/2, 150, 'Corrida infinita com fases e moedas', { fontSize:'18px', fontFamily:'Arial', color:'#fff' }).setOrigin(0.5);
+    this.add.text(GAME_WIDTH/2, 150, 'Endless runner with levels and coins', { fontSize:'18px', fontFamily:'Arial', color:'#fff' }).setOrigin(0.5);
 
-    const play = this.add.text(GAME_WIDTH/2, 240, 'JOGAR', { fontSize:'28px', fontFamily:'Arial', color:'#fff', backgroundColor:'#2b8a3e', padding:8 }).setOrigin(0.5).setInteractive();
+    const play = this.add.text(GAME_WIDTH/2, 240, 'PLAY', { fontSize:'28px', fontFamily:'Arial', color:'#fff', backgroundColor:'#2b8a3e', padding:8 }).setOrigin(0.5).setInteractive();
     const shop = this.add.text(GAME_WIDTH/2, 300, 'SKINS (demo)', { fontSize:'18px', fontFamily:'Arial', color:'#fff', backgroundColor:'#415a77', padding:6 }).setOrigin(0.5).setInteractive();
-    const scores = this.add.text(GAME_WIDTH/2, 340, 'MELHORES PONTOS', { fontSize:'16px', fontFamily:'Arial', color:'#fff' }).setOrigin(0.5).setInteractive();
+    const scores = this.add.text(GAME_WIDTH/2, 340, 'HIGH SCORES', { fontSize:'16px', fontFamily:'Arial', color:'#fff' }).setOrigin(0.5).setInteractive();
 
     play.on('pointerup', ()=> this.scene.start('GameScene', { level:1 }));
     shop.on('pointerup', ()=> this.scene.start('ShopScene'));
     scores.on('pointerup', ()=> this.scene.start('ScoreScene'));
 
-    // small animated demo tuga
     const demo = this.add.sprite(GAME_WIDTH/2, 200, 'tuga').setScale(2);
     this.tweens.add({ targets: demo, y: 180, yoyo:true, loop:-1, duration:800 });
   }
@@ -62,11 +58,14 @@ class ShopScene extends Phaser.Scene {
   constructor(){ super('ShopScene'); }
   create(){
     this.add.rectangle(GAME_WIDTH/2, GAME_HEIGHT/2, GAME_WIDTH, GAME_HEIGHT, 0x071127);
-    this.add.text(GAME_WIDTH/2, 60, 'Loja de Skins (demo)', { fontSize:'32px', color:'#ffd166' }).setOrigin(0.5);
-    this.add.text(60, 120, 'Skin padrão: Turbo Tuga
-Skin ninja: (apenas visual)
-Skin milionário: (apenas visual)', { fontSize:'16px', color:'#fff' });
-    this.add.text(60, 260, 'Clique para voltar', { fontSize:'16px', color:'#fff' }).setInteractive().on('pointerup', ()=> this.scene.start('MenuScene'));
+    this.add.text(GAME_WIDTH/2, 60, 'Skin Shop (demo)', { fontSize:'32px', color:'#ffd166' }).setOrigin(0.5);
+
+    this.add.text(60, 120,
+      'Default skin: Turbo Tuga\nNinja skin: (visual only)\nMillionaire skin: (visual only)',
+      { fontSize:'16px', color:'#fff', wordWrap: { width: 680 } }
+    );
+
+    this.add.text(60, 260, 'Click to return', { fontSize:'16px', color:'#fff' }).setInteractive().on('pointerup', ()=> this.scene.start('MenuScene'));
   }
 }
 
@@ -74,12 +73,14 @@ class ScoreScene extends Phaser.Scene {
   constructor(){ super('ScoreScene'); }
   create(){
     this.add.rectangle(GAME_WIDTH/2, GAME_HEIGHT/2, GAME_WIDTH, GAME_HEIGHT, 0x071127);
-    this.add.text(GAME_WIDTH/2, 60, 'Melhores Pontos', { fontSize:'32px', color:'#ffd166' }).setOrigin(0.5);
+    this.add.text(GAME_WIDTH/2, 60, 'High Scores', { fontSize:'32px', color:'#ffd166' }).setOrigin(0.5);
+
     const scores = JSON.parse(localStorage.getItem('turbo_tuga_scores')||'[]');
     let y=120;
-    if(scores.length===0) this.add.text(GAME_WIDTH/2, 200, 'Sem pontuações ainda', { color:'#fff' }).setOrigin(0.5);
+    if(scores.length===0) this.add.text(GAME_WIDTH/2, 200, 'No scores yet', { color:'#fff' }).setOrigin(0.5);
     scores.slice(0,10).forEach((s, i)=>{ this.add.text(120, y, `${i+1}. ${s.name} - ${s.score}`, { color:'#fff' }); y+=28; });
-    this.add.text(60, GAME_HEIGHT-60, 'Voltar', { color:'#fff' }).setInteractive().on('pointerup', ()=> this.scene.start('MenuScene'));
+
+    this.add.text(60, GAME_HEIGHT-60, 'Back', { color:'#fff' }).setInteractive().on('pointerup', ()=> this.scene.start('MenuScene'));
   }
 }
 
@@ -87,68 +88,51 @@ class GameScene extends Phaser.Scene {
   constructor(){ super('GameScene'); }
   init(data){ this.startLevel = data.level || 1; }
   create(){
-    // settings
     this.level = this.startLevel;
     this.coinsCollected = 0;
     this.lives = 3;
     this.score = 0;
 
-    // background
     this.cameras.main.setBackgroundColor('#071127');
-
-    // world
     this.physics.world.setBounds(0, 0, 2000, GAME_HEIGHT);
 
-    // platforms group
     this.platforms = this.physics.add.staticGroup();
     for(let x=0;x<25;x++){
       this.platforms.create(x*80, GAME_HEIGHT-16, 'tile').setScale(1).refreshBody();
     }
 
-    // player
     this.player = this.physics.add.sprite(100, GAME_HEIGHT-100, 'tuga');
     this.player.setCollideWorldBounds(true);
     this.player.setBounce(0.1);
     this.player.body.setSize(28,28);
-
     this.physics.add.collider(this.player, this.platforms);
 
-    // coins
     this.coins = this.physics.add.group();
     this.spawnCoinsForLevel(this.level);
     this.physics.add.overlap(this.player, this.coins, this.collectCoin, null, this);
 
-    // enemies
     this.enemies = this.physics.add.group();
     this.spawnEnemiesForLevel(this.level);
     this.physics.add.collider(this.enemies, this.platforms);
     this.physics.add.overlap(this.player, this.enemies, this.hitEnemy, null, this);
 
-    // camera
     this.cameras.main.startFollow(this.player, true, 0.08, 0.08);
     this.cameras.main.setBounds(0,0,2000,GAME_HEIGHT);
 
-    // controls
     this.cursors = this.input.keyboard.createCursorKeys();
     this.keyP = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.P);
     this.keyT = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.T);
-
-    // touch to jump
     this.input.on('pointerdown', ()=> this.playerJump());
 
-    // HUD
     this.hud = this.add.container(10,10).setScrollFactor(0);
     this.hudText = this.add.text(0,0, '', { fontSize:'18px', color:'#fff' });
     this.hud.add(this.hudText);
     this.updateHUD();
 
-    // level label
-    this.levelText = this.add.text(20,40, 'Fase '+this.level, { fontSize:'20px', color:'#ffd166' }).setScrollFactor(0);
+    this.levelText = this.add.text(20,40, 'Level '+this.level, { fontSize:'20px', color:'#ffd166' }).setScrollFactor(0);
 
-    // synth sounds
     this.setupSoundSynth();
 
-    // keyboard skin toggles
     this.skinIndex = 0;
     this.skins = ['tuga','tuga','tuga'];
     this.keyT.on('down', ()=> { this.skinIndex = (this.skinIndex+1) % this.skins.length; this.player.setTexture(this.skins[this.skinIndex]); this.playBeep(1200,0.06); });
@@ -157,22 +141,16 @@ class GameScene extends Phaser.Scene {
   update(time, delta){
     if(this.keyP.isDown){ this.scene.pause(); this.scene.launch('PauseScene'); }
 
-    // basic movement
     if(this.cursors.left.isDown){ this.player.setVelocityX(-200); }
     else if(this.cursors.right.isDown){ this.player.setVelocityX(220); }
     else { this.player.setVelocityX(0); }
 
-    // jump
-    if((this.cursors.space.isDown || this.cursors.up.isDown) && this.player.body.onFloor()){ this.playerJump.call(this); }
+    if((this.cursors.space.isDown || this.cursors.up.isDown) && this.player.body.onFloor()){ this.playerJump(); }
 
-    // small running score
     this.score += delta*0.01;
     this.updateHUD();
 
-    // check level cleared
-    if(this.coins.countActive(true)===0){
-      this.levelComplete();
-    }
+    if(this.coins.countActive(true)===0){ this.levelComplete(); }
   }
 
   playerJump(){
@@ -191,7 +169,6 @@ class GameScene extends Phaser.Scene {
   }
 
   hitEnemy(player, enemy){
-    // simple hit logic: reduce life and respawn player or knockback
     enemy.destroy();
     this.lives -= 1;
     this.playBeep(220,0.12);
@@ -201,9 +178,7 @@ class GameScene extends Phaser.Scene {
   }
 
   spawnCoinsForLevel(level){
-    // clear existing
     this.coins.clear(true,true);
-    // spawn pattern depending on level
     for(let i=0;i<8 + level*2;i++){
       const x = 300 + i*130 + Phaser.Math.Between(-40,40);
       const y = GAME_HEIGHT - 140 - Phaser.Math.Between(0,160);
@@ -224,7 +199,6 @@ class GameScene extends Phaser.Scene {
 
   levelComplete(){
     this.playBeep(1500,0.12);
-    // brief celebration, then next level
     this.scene.pause();
     this.scene.launch('LevelCompleteScene', { next: this.level+1, score: Math.floor(this.score) });
   }
@@ -235,13 +209,12 @@ class GameScene extends Phaser.Scene {
     this.spawnEnemiesForLevel(this.level);
     this.player.x = 100; this.player.y = GAME_HEIGHT-100;
     this.scene.resume();
-    this.levelText.setText('Fase '+this.level);
+    this.levelText.setText('Level '+this.level);
   }
 
   gameOver(){
     this.playBeep(120,0.2);
-    // save score
-    const name = prompt('Game over! Informe seu nome para salvar pontuação:','Player') || 'Player';
+    const name = prompt('Game over! Enter your name to save your score:','Player') || 'Player';
     const s = { name, score: Math.floor(this.score) };
     const arr = JSON.parse(localStorage.getItem('turbo_tuga_scores')||'[]');
     arr.push(s); arr.sort((a,b)=>b.score-a.score);
@@ -250,16 +223,15 @@ class GameScene extends Phaser.Scene {
   }
 
   updateHUD(){
-    this.hudText.setText(`Fase: ${this.level}   Moedas: ${this.coinsCollected}   Vidas: ${this.lives}   Pontos: ${Math.floor(this.score)}`);
+    this.hudText.setText(`Level: ${this.level}   Coins: ${this.coinsCollected}   Lives: ${this.lives}   Score: ${Math.floor(this.score)}`);
   }
 
   setupSoundSynth(){
-    // use WebAudio directly for small tones
-    const ctx = new (window.AudioContext || window.webkitAudioContext)();
-    this.audioCtx = ctx;
+    try{ const ctx = new (window.AudioContext || window.webkitAudioContext)(); this.audioCtx = ctx; }catch(e){ this.audioCtx = null; }
   }
 
   playBeep(freq, duration){
+    if(!this.audioCtx) return;
     try{
       const o = this.audioCtx.createOscillator();
       const g = this.audioCtx.createGain();
@@ -268,7 +240,7 @@ class GameScene extends Phaser.Scene {
       o.connect(g); g.connect(this.audioCtx.destination);
       o.start();
       setTimeout(()=>{ o.stop(); }, Math.max(20, duration*1000));
-    }catch(e){/* mute if audio blocked */}
+    }catch(e){}
   }
 
   playCoinSound(){ this.playBeep(1200,0.06); this.playBeep(1600,0.04); }
@@ -280,9 +252,9 @@ class LevelCompleteScene extends Phaser.Scene{
   create(){
     const w = this.cameras.main.width; const h = this.cameras.main.height;
     this.add.rectangle(w/2, h/2, w, h, 0x071127).setScrollFactor(0);
-    this.add.text(w/2, h/2 - 40, 'Fase completa!', { fontSize:'32px', color:'#ffd166' }).setOrigin(0.5);
-    this.add.text(w/2, h/2, `Pontos: ${this.sc}`, { fontSize:'20px', color:'#fff' }).setOrigin(0.5);
-    const nextBtn = this.add.text(w/2, h/2 + 60, 'Próxima Fase', { fontSize:'20px', backgroundColor:'#2b8a3e', padding:8 }).setOrigin(0.5).setInteractive();
+    this.add.text(w/2, h/2 - 40, 'Level Complete!', { fontSize:'32px', color:'#ffd166' }).setOrigin(0.5);
+    this.add.text(w/2, h/2, `Score: ${this.sc}`, { fontSize:'20px', color:'#fff' }).setOrigin(0.5);
+    const nextBtn = this.add.text(w/2, h/2 + 60, 'Next Level', { fontSize:'20px', backgroundColor:'#2b8a3e', padding:8 }).setOrigin(0.5).setInteractive();
     nextBtn.on('pointerup', ()=>{ this.scene.stop(); this.scene.get('GameScene').levelUp(this.next); });
   }
 }
@@ -292,8 +264,8 @@ class PauseScene extends Phaser.Scene{
   create(){
     const w = this.cameras.main.width; const h = this.cameras.main.height;
     this.add.rectangle(w/2, h/2, w, h, 0x000000, 0.5).setScrollFactor(0);
-    this.add.text(w/2, h/2 - 20, 'PAUSA', { fontSize:'40px', color:'#fff' }).setOrigin(0.5);
-    this.add.text(w/2, h/2 + 40, 'Clique para continuar', { fontSize:'18px', color:'#fff' }).setOrigin(0.5).setInteractive().on('pointerup', ()=>{ this.scene.resume('GameScene'); this.scene.stop(); });
+    this.add.text(w/2, h/2 - 20, 'PAUSE', { fontSize:'40px', color:'#fff' }).setOrigin(0.5);
+    this.add.text(w/2, h/2 + 40, 'Click to continue', { fontSize:'18px', color:'#fff' }).setOrigin(0.5).setInteractive().on('pointerup', ()=>{ this.scene.resume('GameScene'); this.scene.stop(); });
   }
 }
 
@@ -307,6 +279,16 @@ const config = {
 };
 
 const game = new Phaser.Game(config);
+
+setTimeout(()=>{
+  try{
+    console.log('Turbo Tuga: checking scenes...');
+    ['MenuScene','GameScene','ShopScene','ScoreScene','LevelCompleteScene','PauseScene'].forEach(k=>{
+      if(!game.scene.keys[k]) console.warn('Missing scene:', k);
+    });
+    console.log('Smoke tests complete — open console for details.');
+  }catch(e){ console.error('Smoke tests failed', e); }
+}, 800);
 
 </script>
 </body>
