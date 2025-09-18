@@ -4,6 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Turbo Tuga — Runner</title>
+  <link rel="icon" href="data:image/png;base64,iVBORw0KGgo=" />
   <script src="https://cdn.jsdelivr.net/npm/phaser@3.60.0/dist/phaser.min.js"></script>
   <style>
     html,body { height:100%; margin:0; background:#0b1020; }
@@ -17,8 +18,7 @@
   <div class="instructions">Keys: ← → to move / Space to jump / T to change skin • Mobile: tap to jump</div>
 
 <script>
-// Turbo Tuga — Phaser 3 single-file game
-// Features: multiple levels, scenes, coins, synthesized sounds, keyboard + touch controls, HUD, save highscore.
+// Turbo Tuga — Phaser 3 full game with title screen, shop, scores, levels, HUD, sounds.
 
 const GAME_WIDTH = 800;
 const GAME_HEIGHT = 480;
@@ -26,31 +26,31 @@ const GAME_HEIGHT = 480;
 class BootScene extends Phaser.Scene {
   constructor(){ super('BootScene'); }
   preload(){
-    this.textures.generate('tuga', { data: ['.111.','11111','11111','11111','.111.'], pixelWidth: 12 });
+    this.load.image('tugaImg','Logo.png'); // player sprite from uploaded asset
     this.textures.generate('coin', { data: ['.222.','.222.','22222','.222.','.222.'], pixelWidth:8 });
     this.textures.generate('tile', { data: ['33333','33333','33333','33333'], pixelWidth:16 });
     this.textures.generate('enemy', { data: ['.4.','.444','.4.'], pixelWidth:20 });
   }
-  create(){ this.scene.start('MenuScene'); }
+  create(){ this.scene.start('TitleScene'); }
 }
 
-class MenuScene extends Phaser.Scene {
-  constructor(){ super('MenuScene'); }
+class TitleScene extends Phaser.Scene{
+  constructor(){ super('TitleScene'); }
   create(){
     this.add.rectangle(GAME_WIDTH/2, GAME_HEIGHT/2, GAME_WIDTH, GAME_HEIGHT, 0x071127);
-    this.add.text(GAME_WIDTH/2, 80, 'Turbo Tuga', { fontSize: '48px', fontFamily:'Arial', color:'#ffd166' }).setOrigin(0.5);
-    this.add.text(GAME_WIDTH/2, 150, 'Endless runner with levels and coins', { fontSize:'18px', fontFamily:'Arial', color:'#fff' }).setOrigin(0.5);
+    this.add.text(GAME_WIDTH/2, 100, 'Turbo Tuga', { fontSize:'60px', fontFamily:'Arial', color:'#ffd166' }).setOrigin(0.5);
+    this.add.text(GAME_WIDTH/2, 160, 'Endless Runner with Levels and Coins', { fontSize:'20px', color:'#fff' }).setOrigin(0.5);
 
-    const play = this.add.text(GAME_WIDTH/2, 240, 'PLAY', { fontSize:'28px', fontFamily:'Arial', color:'#fff', backgroundColor:'#2b8a3e', padding:8 }).setOrigin(0.5).setInteractive();
-    const shop = this.add.text(GAME_WIDTH/2, 300, 'SKINS (demo)', { fontSize:'18px', fontFamily:'Arial', color:'#fff', backgroundColor:'#415a77', padding:6 }).setOrigin(0.5).setInteractive();
-    const scores = this.add.text(GAME_WIDTH/2, 340, 'HIGH SCORES', { fontSize:'16px', fontFamily:'Arial', color:'#fff' }).setOrigin(0.5).setInteractive();
+    const playBtn = this.add.text(GAME_WIDTH/2, 260, 'START GAME', { fontSize:'28px', fontFamily:'Arial', color:'#fff', backgroundColor:'#2b8a3e', padding:10 }).setOrigin(0.5).setInteractive();
+    const shopBtn = this.add.text(GAME_WIDTH/2, 320, 'SHOP', { fontSize:'22px', fontFamily:'Arial', color:'#fff', backgroundColor:'#415a77', padding:8 }).setOrigin(0.5).setInteractive();
+    const scoresBtn = this.add.text(GAME_WIDTH/2, 370, 'HIGH SCORES', { fontSize:'20px', fontFamily:'Arial', color:'#fff' }).setOrigin(0.5).setInteractive();
 
-    play.on('pointerup', ()=> this.scene.start('GameScene', { level:1 }));
-    shop.on('pointerup', ()=> this.scene.start('ShopScene'));
-    scores.on('pointerup', ()=> this.scene.start('ScoreScene'));
+    playBtn.on('pointerup', ()=> this.scene.start('GameScene', { level:1 }));
+    shopBtn.on('pointerup', ()=> this.scene.start('ShopScene'));
+    scoresBtn.on('pointerup', ()=> this.scene.start('ScoreScene'));
 
-    const demo = this.add.sprite(GAME_WIDTH/2, 200, 'tuga').setScale(2);
-    this.tweens.add({ targets: demo, y: 180, yoyo:true, loop:-1, duration:800 });
+    const hero = this.add.image(GAME_WIDTH/2, 200, 'tugaImg').setScale(0.25);
+    this.tweens.add({ targets: hero, y: 190, yoyo:true, loop:-1, duration:800 });
   }
 }
 
@@ -58,14 +58,12 @@ class ShopScene extends Phaser.Scene {
   constructor(){ super('ShopScene'); }
   create(){
     this.add.rectangle(GAME_WIDTH/2, GAME_HEIGHT/2, GAME_WIDTH, GAME_HEIGHT, 0x071127);
-    this.add.text(GAME_WIDTH/2, 60, 'Skin Shop (demo)', { fontSize:'32px', color:'#ffd166' }).setOrigin(0.5);
-
+    this.add.text(GAME_WIDTH/2, 60, 'Skin Shop', { fontSize:'32px', color:'#ffd166' }).setOrigin(0.5);
     this.add.text(60, 120,
-      'Default skin: Turbo Tuga\nNinja skin: (visual only)\nMillionaire skin: (visual only)',
+      'Default Skin: Turbo Tuga\nNinja Skin: (visual only)\nMillionaire Skin: (visual only)',
       { fontSize:'16px', color:'#fff', wordWrap: { width: 680 } }
     );
-
-    this.add.text(60, 260, 'Click to return', { fontSize:'16px', color:'#fff' }).setInteractive().on('pointerup', ()=> this.scene.start('MenuScene'));
+    this.add.text(60, 260, 'Click to return', { fontSize:'16px', color:'#fff' }).setInteractive().on('pointerup', ()=> this.scene.start('TitleScene'));
   }
 }
 
@@ -74,223 +72,102 @@ class ScoreScene extends Phaser.Scene {
   create(){
     this.add.rectangle(GAME_WIDTH/2, GAME_HEIGHT/2, GAME_WIDTH, GAME_HEIGHT, 0x071127);
     this.add.text(GAME_WIDTH/2, 60, 'High Scores', { fontSize:'32px', color:'#ffd166' }).setOrigin(0.5);
-
     const scores = JSON.parse(localStorage.getItem('turbo_tuga_scores')||'[]');
     let y=120;
     if(scores.length===0) this.add.text(GAME_WIDTH/2, 200, 'No scores yet', { color:'#fff' }).setOrigin(0.5);
-    scores.slice(0,10).forEach((s, i)=>{ this.add.text(120, y, `${i+1}. ${s.name} - ${s.score}`, { color:'#fff' }); y+=28; });
-
-    this.add.text(60, GAME_HEIGHT-60, 'Back', { color:'#fff' }).setInteractive().on('pointerup', ()=> this.scene.start('MenuScene'));
+    scores.slice(0,10).forEach((s,i)=>{ this.add.text(120, y, `${i+1}. ${s.name} - ${s.score}`, { color:'#fff' }); y+=28; });
+    this.add.text(60, GAME_HEIGHT-60, 'Back', { color:'#fff' }).setInteractive().on('pointerup', ()=> this.scene.start('TitleScene'));
   }
 }
 
-class GameScene extends Phaser.Scene {
+class GameScene extends Phaser.Scene{
   constructor(){ super('GameScene'); }
   init(data){ this.startLevel = data.level || 1; }
   create(){
-    this.level = this.startLevel;
-    this.coinsCollected = 0;
-    this.lives = 3;
-    this.score = 0;
-
+    this.level = this.startLevel; this.coinsCollected=0; this.lives=3; this.score=0;
     this.cameras.main.setBackgroundColor('#071127');
     this.physics.world.setBounds(0, 0, 2000, GAME_HEIGHT);
-
     this.platforms = this.physics.add.staticGroup();
-    for(let x=0;x<25;x++){
-      this.platforms.create(x*80, GAME_HEIGHT-16, 'tile').setScale(1).refreshBody();
-    }
-
-    this.player = this.physics.add.sprite(100, GAME_HEIGHT-100, 'tuga');
-    this.player.setCollideWorldBounds(true);
-    this.player.setBounce(0.1);
-    this.player.body.setSize(28,28);
+    for(let x=0;x<25;x++){ this.platforms.create(x*80, GAME_HEIGHT-16, 'tile').refreshBody(); }
+    this.player = this.physics.add.sprite(100, GAME_HEIGHT-100, 'tugaImg').setScale(0.25);
+    this.player.setCollideWorldBounds(true); this.player.setBounce(0.1);
     this.physics.add.collider(this.player, this.platforms);
-
-    this.coins = this.physics.add.group();
-    this.spawnCoinsForLevel(this.level);
+    this.coins = this.physics.add.group(); this.spawnCoinsForLevel(this.level);
     this.physics.add.overlap(this.player, this.coins, this.collectCoin, null, this);
-
-    this.enemies = this.physics.add.group();
-    this.spawnEnemiesForLevel(this.level);
+    this.enemies = this.physics.add.group(); this.spawnEnemiesForLevel(this.level);
     this.physics.add.collider(this.enemies, this.platforms);
     this.physics.add.overlap(this.player, this.enemies, this.hitEnemy, null, this);
-
-    this.cameras.main.startFollow(this.player, true, 0.08, 0.08);
+    this.cameras.main.startFollow(this.player,true,0.08,0.08);
     this.cameras.main.setBounds(0,0,2000,GAME_HEIGHT);
-
     this.cursors = this.input.keyboard.createCursorKeys();
     this.keyP = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.P);
     this.keyT = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.T);
     this.input.on('pointerdown', ()=> this.playerJump());
-
     this.hud = this.add.container(10,10).setScrollFactor(0);
-    this.hudText = this.add.text(0,0, '', { fontSize:'18px', color:'#fff' });
-    this.hud.add(this.hudText);
-    this.updateHUD();
-
-    this.levelText = this.add.text(20,40, 'Level '+this.level, { fontSize:'20px', color:'#ffd166' }).setScrollFactor(0);
-
+    this.hudText = this.add.text(0,0,'',{ fontSize:'18px', color:'#fff' });
+    this.hud.add(this.hudText); this.updateHUD();
+    this.levelText = this.add.text(20,40,'Level '+this.level,{ fontSize:'20px', color:'#ffd166' }).setScrollFactor(0);
     this.setupSoundSynth();
-
-    this.skinIndex = 0;
-    this.skins = ['tuga','tuga','tuga'];
-    this.keyT.on('down', ()=> { this.skinIndex = (this.skinIndex+1) % this.skins.length; this.player.setTexture(this.skins[this.skinIndex]); this.playBeep(1200,0.06); });
+    this.skinIndex=0; this.skins=['tugaImg','tugaImg','tugaImg'];
+    this.keyT.on('down', ()=>{ this.skinIndex=(this.skinIndex+1)%this.skins.length; this.player.setTexture(this.skins[this.skinIndex]); this.playBeep(1200,0.06); });
   }
-
-  update(time, delta){
+  update(time,delta){
     if(this.keyP.isDown){ this.scene.pause(); this.scene.launch('PauseScene'); }
-
     if(this.cursors.left.isDown){ this.player.setVelocityX(-200); }
     else if(this.cursors.right.isDown){ this.player.setVelocityX(220); }
     else { this.player.setVelocityX(0); }
-
-    if((this.cursors.space.isDown || this.cursors.up.isDown) && this.player.body.onFloor()){ this.playerJump(); }
-
-    this.score += delta*0.01;
-    this.updateHUD();
-
+    if((this.cursors.space.isDown||this.cursors.up.isDown)&&this.player.body.onFloor()){ this.playerJump(); }
+    this.score+=delta*0.01; this.updateHUD();
     if(this.coins.countActive(true)===0){ this.levelComplete(); }
   }
-
-  playerJump(){
-    if(this.player.body.onFloor()){
-      this.player.setVelocityY(-380);
-      this.playBeep(700,0.08);
-    }
-  }
-
-  collectCoin(player, coin){
-    coin.disableBody(true,true);
-    this.coinsCollected++;
-    this.score += 100;
-    this.playCoinSound();
-    this.updateHUD();
-  }
-
-  hitEnemy(player, enemy){
-    enemy.destroy();
-    this.lives -= 1;
-    this.playBeep(220,0.12);
-    if(this.lives<=0){ this.gameOver(); }
-    else { this.player.setTint(0xff0000); this.time.delayedCall(400, ()=> this.player.clearTint()); }
-    this.updateHUD();
-  }
-
-  spawnCoinsForLevel(level){
-    this.coins.clear(true,true);
-    for(let i=0;i<8 + level*2;i++){
-      const x = 300 + i*130 + Phaser.Math.Between(-40,40);
-      const y = GAME_HEIGHT - 140 - Phaser.Math.Between(0,160);
-      const c = this.coins.create(x,y,'coin'); c.body.setAllowGravity(false);
-    }
-  }
-
-  spawnEnemiesForLevel(level){
-    this.enemies.clear(true,true);
-    for(let i=0;i<2 + level;i++){
-      const x = 500 + i*400 + Phaser.Math.Between(-50,50);
-      const e = this.enemies.create(x,GAME_HEIGHT-60,'enemy');
-      e.setBounce(1);
-      e.setVelocityX(Phaser.Math.Between(-80,80));
-      e.setCollideWorldBounds(true);
-    }
-  }
-
-  levelComplete(){
-    this.playBeep(1500,0.12);
-    this.scene.pause();
-    this.scene.launch('LevelCompleteScene', { next: this.level+1, score: Math.floor(this.score) });
-  }
-
-  levelUp(newLevel){
-    this.level = newLevel;
-    this.spawnCoinsForLevel(this.level);
-    this.spawnEnemiesForLevel(this.level);
-    this.player.x = 100; this.player.y = GAME_HEIGHT-100;
-    this.scene.resume();
-    this.levelText.setText('Level '+this.level);
-  }
-
-  gameOver(){
-    this.playBeep(120,0.2);
-    const name = prompt('Game over! Enter your name to save your score:','Player') || 'Player';
-    const s = { name, score: Math.floor(this.score) };
-    const arr = JSON.parse(localStorage.getItem('turbo_tuga_scores')||'[]');
-    arr.push(s); arr.sort((a,b)=>b.score-a.score);
-    localStorage.setItem('turbo_tuga_scores', JSON.stringify(arr.slice(0,20)));
-    this.scene.start('MenuScene');
-  }
-
-  updateHUD(){
-    this.hudText.setText(`Level: ${this.level}   Coins: ${this.coinsCollected}   Lives: ${this.lives}   Score: ${Math.floor(this.score)}`);
-  }
-
-  setupSoundSynth(){
-    try{ const ctx = new (window.AudioContext || window.webkitAudioContext)(); this.audioCtx = ctx; }catch(e){ this.audioCtx = null; }
-  }
-
-  playBeep(freq, duration){
-    if(!this.audioCtx) return;
-    try{
-      const o = this.audioCtx.createOscillator();
-      const g = this.audioCtx.createGain();
-      o.type = 'sine'; o.frequency.value = freq;
-      g.gain.value = 0.08;
-      o.connect(g); g.connect(this.audioCtx.destination);
-      o.start();
-      setTimeout(()=>{ o.stop(); }, Math.max(20, duration*1000));
-    }catch(e){}
-  }
-
+  playerJump(){ if(this.player.body.onFloor()){ this.player.setVelocityY(-380); this.playBeep(700,0.08); }}
+  collectCoin(player,coin){ coin.disableBody(true,true); this.coinsCollected++; this.score+=100; this.playCoinSound(); this.updateHUD(); }
+  hitEnemy(player,enemy){ enemy.destroy(); this.lives-=1; this.playBeep(220,0.12); if(this.lives<=0){ this.gameOver(); } else { this.player.setTint(0xff0000); this.time.delayedCall(400,()=>this.player.clearTint()); } this.updateHUD(); }
+  spawnCoinsForLevel(level){ this.coins.clear(true,true); for(let i=0;i<8+level*2;i++){ const x=300+i*130+Phaser.Math.Between(-40,40); const y=GAME_HEIGHT-140-Phaser.Math.Between(0,160); const c=this.coins.create(x,y,'coin'); c.body.setAllowGravity(false); } }
+  spawnEnemiesForLevel(level){ this.enemies.clear(true,true); for(let i=0;i<2+level;i++){ const x=500+i*400+Phaser.Math.Between(-50,50); const e=this.enemies.create(x,GAME_HEIGHT-60,'enemy'); e.setBounce(1); e.setVelocityX(Phaser.Math.Between(-80,80)); e.setCollideWorldBounds(true); } }
+  levelComplete(){ this.playBeep(1500,0.12); this.scene.pause(); this.scene.launch('LevelCompleteScene',{ next:this.level+1, score:Math.floor(this.score) }); }
+  levelUp(newLevel){ this.level=newLevel; this.spawnCoinsForLevel(this.level); this.spawnEnemiesForLevel(this.level); this.player.x=100; this.player.y=GAME_HEIGHT-100; this.scene.resume(); this.levelText.setText('Level '+this.level); }
+  gameOver(){ this.playBeep(120,0.2); const name=prompt('Game over! Enter your name to save score:','Player')||'Player'; const s={ name, score:Math.floor(this.score)}; const arr=JSON.parse(localStorage.getItem('turbo_tuga_scores')||'[]'); arr.push(s); arr.sort((a,b)=>b.score-a.score); localStorage.setItem('turbo_tuga_scores',JSON.stringify(arr.slice(0,20))); this.scene.start('TitleScene'); }
+  updateHUD(){ this.hudText.setText(`Level: ${this.level}   Coins: ${this.coinsCollected}   Lives: ${this.lives}   Score: ${Math.floor(this.score)}`); }
+  setupSoundSynth(){ try{ const ctx=new (window.AudioContext||window.webkitAudioContext)(); this.audioCtx=ctx; }catch(e){ this.audioCtx=null; }}
+  playBeep(freq,duration){ if(!this.audioCtx) return; try{ const o=this.audioCtx.createOscillator(); const g=this.audioCtx.createGain(); o.type='sine'; o.frequency.value=freq; g.gain.value=0.08; o.connect(g); g.connect(this.audioCtx.destination); o.start(); setTimeout(()=>{ o.stop(); }, Math.max(20,duration*1000)); }catch(e){} }
   playCoinSound(){ this.playBeep(1200,0.06); this.playBeep(1600,0.04); }
 }
 
 class LevelCompleteScene extends Phaser.Scene{
   constructor(){ super('LevelCompleteScene'); }
-  init(data){ this.next = data.next; this.sc = data.score; }
+  init(data){ this.next=data.next; this.sc=data.score; }
   create(){
-    const w = this.cameras.main.width; const h = this.cameras.main.height;
-    this.add.rectangle(w/2, h/2, w, h, 0x071127).setScrollFactor(0);
-    this.add.text(w/2, h/2 - 40, 'Level Complete!', { fontSize:'32px', color:'#ffd166' }).setOrigin(0.5);
-    this.add.text(w/2, h/2, `Score: ${this.sc}`, { fontSize:'20px', color:'#fff' }).setOrigin(0.5);
-    const nextBtn = this.add.text(w/2, h/2 + 60, 'Next Level', { fontSize:'20px', backgroundColor:'#2b8a3e', padding:8 }).setOrigin(0.5).setInteractive();
-    nextBtn.on('pointerup', ()=>{ this.scene.stop(); this.scene.get('GameScene').levelUp(this.next); });
+    const w=this.cameras.main.width; const h=this.cameras.main.height;
+    this.add.rectangle(w/2,h/2,w,h,0x071127).setScrollFactor(0);
+    this.add.text(w/2,h/2-40,'Level Complete!',{ fontSize:'32px', color:'#ffd166' }).setOrigin(0.5);
+    this.add.text(w/2,h/2,`Score: ${this.sc}`,{ fontSize:'20px', color:'#fff' }).setOrigin(0.5);
+    const nextBtn=this.add.text(w/2,h/2+60,'Next Level',{ fontSize:'20px', backgroundColor:'#2b8a3e', padding:8 }).setOrigin(0.5).setInteractive();
+    nextBtn.on('pointerup',()=>{ this.scene.stop(); this.scene.get('GameScene').levelUp(this.next); });
   }
 }
 
 class PauseScene extends Phaser.Scene{
   constructor(){ super('PauseScene'); }
   create(){
-    const w = this.cameras.main.width; const h = this.cameras.main.height;
-    this.add.rectangle(w/2, h/2, w, h, 0x000000, 0.5).setScrollFactor(0);
-    this.add.text(w/2, h/2 - 20, 'PAUSE', { fontSize:'40px', color:'#fff' }).setOrigin(0.5);
-    this.add.text(w/2, h/2 + 40, 'Click to continue', { fontSize:'18px', color:'#fff' }).setOrigin(0.5).setInteractive().on('pointerup', ()=>{ this.scene.resume('GameScene'); this.scene.stop(); });
+    const w=this.cameras.main.width; const h=this.cameras.main.height;
+    this.add.rectangle(w/2,h/2,w,h,0x000000,0.5).setScrollFactor(0);
+    this.add.text(w/2,h/2-20,'PAUSED',{ fontSize:'40px', color:'#fff' }).setOrigin(0.5);
+    this.add.text(w/2,h/2+40,'Click to continue',{ fontSize:'18px', color:'#fff' }).setOrigin(0.5).setInteractive().on('pointerup',()=>{ this.scene.resume('GameScene'); this.scene.stop(); });
   }
 }
 
-const config = {
-  type: Phaser.AUTO,
-  width: GAME_WIDTH,
-  height: GAME_HEIGHT,
-  parent: 'game-container',
-  physics: { default: 'arcade', arcade: { gravity: { y: 800 }, debug: false } },
-  scene: [ BootScene, MenuScene, ShopScene, ScoreScene, GameScene, LevelCompleteScene, PauseScene ]
-};
+const config={ type:Phaser.AUTO, width:GAME_WIDTH, height:GAME_HEIGHT, parent:'game-container', physics:{ default:'arcade', arcade:{ gravity:{ y:800 }, debug:false } }, scene:[BootScene, TitleScene, ShopScene, ScoreScene, GameScene, LevelCompleteScene, PauseScene] };
+const game=new Phaser.Game(config);
 
-const game = new Phaser.Game(config);
-
+// Smoke tests
 setTimeout(()=>{
   try{
     console.log('Turbo Tuga: checking scenes...');
-    ['MenuScene','GameScene','ShopScene','ScoreScene','LevelCompleteScene','PauseScene'].forEach(k=>{
-      if(!game.scene.keys[k]) console.warn('Missing scene:', k);
-    });
+    ['TitleScene','GameScene','ShopScene','ScoreScene','LevelCompleteScene','PauseScene'].forEach(k=>{ if(!game.scene.keys[k]) console.warn('Missing scene:',k); });
     console.log('Smoke tests complete — open console for details.');
-  }catch(e){ console.error('Smoke tests failed', e); }
-}, 800);
-
+  }catch(e){ console.error('Smoke tests failed',e); }
+},800);
 </script>
 </body>
 </html>
-
