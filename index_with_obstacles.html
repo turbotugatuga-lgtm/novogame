@@ -1,0 +1,219 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Turbo Tuga — Demo</title>
+<style>
+  html,body {height:100%;margin:0;background:#071127;font-family:Arial,Helvetica,sans-serif}
+  #game-container {width:100%;height:100vh;display:flex;align-items:center;justify-content:center}
+  canvas{display:block;margin:0 auto}
+  .ui { position: fixed; left: 12px; top: 12px; color:#fff; font-weight:700; text-shadow:0 1px 0 #000; }
+  .ui .score { font-size:18px; }
+  .ui .level { font-size:14px; opacity:0.9; }
+  .topright { position: fixed; right: 12px; top: 12px; color:#fff; }
+  .center-msg { position: fixed; left:50%; top:50%; transform:translate(-50%,-50%); color:#fff; text-align:center; display:none; }
+  .btn { background:#2b8a3e; padding:10px 16px; border-radius:8px; cursor:pointer; display:inline-block; margin-top:8px; }
+</style>
+</head>
+<body>
+<div id="game-container"></div>
+<div class="ui"><div class="score">Coins: <span id="coins">0</span></div><div class="level">Level: <span id="level">1</span></div></div>
+<div class="topright"><div class="score">Lives: <span id="lives">3</span></div></div>
+<div class="center-msg" id="centerMsg"><div id="centerText"></div><div class="btn" id="restartBtn">Restart</div></div>
+
+<!-- Phaser from CDN (replace with local phaser.min.js if you prefer) -->
+<script src="https://unpkg.com/phaser@3.60.0/dist/phaser.min.js"></script>
+
+<script>
+const BG_DATA = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAyAAAAJYCAIAAAAVFBUnAAAKtklEQVR4nO3YQQ2AMAAEQYqUmuWBN4zUBCY2adLMKLjn5sbzrQsAgM69ewAAwGkEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMTGfOfuDQAAR/FgAQDEBBYAQExgAQDEBBYAQExgAQDEBBYAQExgAQDEBBYAQExgAQDEBBYAQExgAQDEBBYAQExgAQDEBBYAQExgAQDEBBYAQExgAQDEBBYAQExgAQDEBBYAQExgAQDEBBYAQExgAQDEBBYAQExgAQDEBBYAQExgAQDEBBYAQExgAQDEBBYAQExgAQDEBBYAQExgAQDEBBYAQExgAQDEBBYAQExgAQDEBBYAQExgAQDEBBYAQExgAQDEBBYAQExgAQDEBBYAQExgAQDEBBYAQExgAQDEBBYAQExgAQDEBBYAQExgAQDEBBYAQExgAQDEBBYAQExgAQDEBBYAQExgAQDEBBYAQExgAQDEBBYAQExgAQDEBBYAQExgAQDEBBYAQExgAQDEBBYAQExgAQDEBBYAQExgAQDEBBYAQExgAQDEBBYAQExgAQDEBBYAQExgAQDEBBYAQExgAQDEBBYAQExgAQDEBBYAQExgAQDEBBYAQExgAQDEBBYAQExgAQDEBBYAQExgAQDEBBYAQExgAQDEBBYAQExgAQDEBBYAQExgAQDEBBYAQExgAQDEBBYAQExgAQDEBBYAQExgAQDEfl8VB74LMlrvAAAAAElFTkSuQmCC";
+const COIN_DATA = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAIAAAACACAYAAADDPmHLAAAD20lEQVR4nO2dy3HeMAwGkVTiS1JA2kl9accFOBd3kpw049H8kvjAi8Tu3WMK3wqgJI8pAgAAAAAAAAAAAPvzLXoBHnz8efs3+rM/f39uXaPtLm4m7FZ2kmL5C/EI/ImVhVhy4RlCv2I1GZZabObgz6wiwhKLXCn4M9lFSL04zeB//Prs/pm/729avz6tCCkXNRP8SNC9zIiRTYRUixkN3iP0K0ZlyCJCikWI9IcfGfoVvTJkkCB8ASJ94WcM/kyPCNEShP7y3YI/s4IIYQK0hr9i8GdaRYiQIESAlvB3CP5MiwjeEnz3/GUidcMXabsu75dergJUDv8gmwRu7ebponYP/hVPI8FjHLh0AMJ/zdN1e3QCcwEI/55oCUwFIPw2IiUwE4Dw+4iSwEQAwh8jQgL39wCEf493fdQFuLOU8Nu4q5N2F1AVgPD18JJATYCV/25vRbTq7bIH4O4fw6NuKgLQ+u2wHgWmHYDwdbCs47QAzP5YZutv1gG4+3WxqueUANz9OZjJwaQDcPfbYFHXYQG4+3Mxmod6B+Dut0W7vkMCcPfnZCQX1Q7A3e+DZp3dPwdDLroFoP3npjcftQ5A+/dFq96MgOIgQHG6BLiaL7T/GK7q3rMPoAMUBwGKgwDFQYDiNAvAC6C1aM1rugPwBBDLbP0ZAcVBgOIgQHEQoDgIUBwEKA4CFAcBioMAxUGA4iBAcRCgONMCaB6tBv3M1r9ZgOizbaCP1rwYAcVBgOIgQHEQoDhdAlxtLHgSiOGq7j0bdjpAcRCgOGoCMAZ80ap3twC8EMpNbz6MgOKoCsAY8EGzzkMCMAZyMpKL+gigC9iiXd9hAegCuRjNw2QTSBewwaKuUwLQBXIwk4PZYyBdQBerek4LQBeIZbb+pi+C6AI6WNZRRYA7C5Fgjrv6aXRfl1fBSDCGR93UBGAv4ItWvVU7AKNAD+vWf6A+ApBgHq/wRQI+ByPBPd71MRHgyVIkeM1TXSz2WWYdAAn6iAhfxHgEIEEbUeGLOOwBkOCeyPBFnDaBSPCa6PBFRFxf3rT8B+sK/3y6RXivF2uuj4EtF7V7N8gUvkjAe4DKEmQLX8R5BHyl9UCDHUZCq9AR31NCP+D0nEKyogg9nSzqY1qKL3i7ibBC8AcpBBDpP5Moowi9e5fo8EUSCSAyfjBVpAyjG9YM4YskE+Bg5oQyDxlmnlKyBH+QajFnNI+qGxFD83E0W/AHKRd1ZuUzC7MGf5B6cWdWEiF78AdLLPJMZhFWCf5gqcW+IoMMq4X+lWUXfoWHECsHfmabC7ljRoqdwgYAAAAAAAAAgML8B6Dtr83slVZ8AAAAAElFTkSuQmCC";
+const TUGA_DATA = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAIAAAACACAYAAADDPmHLAAABq0lEQVR4nO3dy2qDQABAUaf0/3/ZrgLB2kZDcIR7ztIXwtzxtXGsy7IuZH3NPgHmEkCcAOIEECeAOAHECSBOAHECiBNAnADiBBAngDgBxAkgTgBxAogTQJwA4gQQJ4A4AcQJIE4AcQKIE0CcAOIEECeAOAHECSBOAHECiBNAnADiBBAngDgBxAkgTgBxAogTQJwA4gQQJ4A4AcQJIE4AcQKIE0CcAOIEEPd9eMt1599SY3zwVJhhnPpr2COCMX4H8bzsEcbe9tt9RTTV+7eAMf4fvFeDv42EKa5/BjDwt3J9ANsrAFMdD+B5xu7dw7frX830v47Hpc49BL7LrL+t46+BZ+29JXA711wBuC1fAuMEECeAOAHECSBOAHECiBNAnADiBBAngDgBxAkgTgBxAogTQJwA4gQQJ4A4AcQJIE4AcQKIE0CcAOIEECeAOAHECSBOAHECiBNAnADiBBAngDgBxAkgTgBxAogTQJwA4gQQJ4A4AcQJIE4AcQKIE0CcAOIEECeAOAHECSBOAHECiBNAnADiBBAngDgBxAkgTgBxAogTQJwA4gQQ9wMXkTTxyE8eOgAAAABJRU5ErkJggg==";
+
+const GAME_WIDTH = 800, GAME_HEIGHT = 480;
+
+
+class BootScene extends Phaser.Scene {
+  constructor(){ super('BootScene'); }
+  preload(){
+    this.load.once('complete', ()=>{}, this);
+  }
+  create(){
+    this.textures.addBase64('background', BG_DATA);
+    this.textures.addBase64('coin', COIN_DATA);
+    this.textures.addBase64('tuga', TUGA_DATA);
+    this.scene.start('TitleScene');
+  }
+}
+
+class TitleScene extends Phaser.Scene {
+  constructor(){ super('TitleScene'); }
+  create(){
+    this.add.image(GAME_WIDTH/2,GAME_HEIGHT/2,'background').setDisplaySize(GAME_WIDTH,GAME_HEIGHT);
+    this.add.text(GAME_WIDTH/2,60,'TURBO TUGA',{ fontFamily:'Arial', fontSize:'48px', color:'#ffd166' }).setOrigin(0.5);
+    this.add.text(GAME_WIDTH/2,120,'Um jogo demonstrativo para divulgar o token',{ fontSize:'18px', color:'#fff' }).setOrigin(0.5);
+    const start = this.add.text(GAME_WIDTH/2,GAME_HEIGHT-120,'START',{ fontSize:'28px', backgroundColor:'#2b8a3e', padding:10, color:'#fff' }).setOrigin(0.5).setInteractive();
+    start.on('pointerup', ()=> this.scene.start('GameScene',{level:1}) );
+  }
+}
+
+class GameScene extends Phaser.Scene {
+  constructor(){ super('GameScene'); }
+  init(data){ this.level = data.level || 1; }
+  create(){
+    this.bg = this.add.image(0,0,'background').setOrigin(0).setDisplaySize(GAME_WIDTH,GAME_HEIGHT);
+    const worldWidth = 5000;
+    this.physics.world.setBounds(0,0,worldWidth,GAME_HEIGHT);
+    this.cameras.main.setBounds(0,0,worldWidth,GAME_HEIGHT);
+    this.platforms = this.physics.add.staticGroup();
+    for(let i=0;i<Math.ceil(worldWidth/80);i++) {
+      let x = i*80;
+      let rect = this.add.rectangle(x, GAME_HEIGHT-32, 80, 64, 0x228B22).setOrigin(0,0);
+      this.physics.add.existing(rect, true);
+      this.platforms.add(rect);
+    }
+    const g = this.add.graphics();
+    g.fillStyle(0x888888);
+    let spikeW = 32, spikeH = 32;
+    g.clear();
+    g.fillTriangle(0,spikeH, spikeW/2,0, spikeW,spikeH);
+    g.generateTexture('spike', spikeW, spikeH);
+    g.clear();
+    this.player = this.physics.add.sprite(120, GAME_HEIGHT-150, 'tuga').setScale(0.9);
+    this.player.setCollideWorldBounds(true);
+    this.player.body.setSize(this.player.width*0.6, this.player.height*0.8, true);
+    this.physics.add.collider(this.player, this.platforms);
+    this.tween = this.tweens.add({ targets: this.player, y: '+=4', duration: 220, yoyo:true, repeat:-1, ease:'Sine.easeInOut' });
+    this.coins = this.physics.add.group();
+    this.spawnCoins(25);
+    this.physics.add.overlap(this.player, this.coins, (p,c)=>{ c.disableBody(true,true); this.updateCoins(10); }, null, this);
+    this.obstacles = this.physics.add.group({ allowGravity:false });
+    this.spawnSpikes(18);
+    this.physics.add.collider(this.player, this.obstacles, ()=> this.playerHit(), null, this);
+    this.cameras.main.startFollow(this.player, true, 0.08, 0.08);
+    this.cameras.main.setZoom(1);
+    this.cursors = this.input.keyboard.createCursorKeys();
+    this.score = 0;
+    this.coinsCollected = 0;
+    this.lives = 3;
+    this.updateHUD();
+    this.isGameOver = false;
+    this.speed = 200 + (this.level-1)*40;
+    this.obstacleTimer = this.time.addEvent({ delay: 2800 - (this.level*150), loop:true, callback: ()=> this.spawnMovingSpike() });
+    this.add.text(10, GAME_HEIGHT-22, '← → ou teclas A/D para mover, ↑ para pular', { fontSize:'12px', color:'#fff' }).setScrollFactor(0);
+  }
+
+  spawnCoins(n){
+    const startX = 400;
+    for(let i=0;i<n;i++){
+      let x = startX + i * Phaser.Math.Between(120, 220);
+      let y = GAME_HEIGHT - Phaser.Math.Between(140, 220);
+      let c = this.coins.create(x,y,'coin').setScale(1).setDepth(2);
+      c.body.setAllowGravity(false);
+    }
+  }
+
+  spawnSpikes(n){
+    const startX = 600;
+    for(let i=0;i<n;i++){
+      let x = startX + i * Phaser.Math.Between(160, 360);
+      let y = GAME_HEIGHT - 48 - 16;
+      let s = this.obstacles.create(x,y,'spike');
+      s.setOrigin(0.5,1);
+      s.body.setSize(32,32,true);
+      s.body.setImmovable(true);
+    }
+  }
+
+  spawnMovingSpike(){
+    let x = this.cameras.main.scrollX + GAME_WIDTH + 60;
+    let y = GAME_HEIGHT - 48 - 16;
+    let s = this.obstacles.create(x,y,'spike');
+    s.setOrigin(0.5,1);
+    s.body.setAllowGravity(false);
+    s.body.setImmovable(true);
+    s.body.setVelocityX(- (this.speed + Phaser.Math.Between(40,120)) );
+    s.checkWorldBounds = true;
+    s.outOfBoundsKill = true;
+  }
+
+  playerHit(){
+    if(this.isGameOver) return;
+    this.lives -= 1;
+    this.updateHUD();
+    this.cameras.main.flash(250, 255, 80, 80);
+    this.player.setTint(0xff6666);
+    this.time.delayedCall(600, ()=>{ this.player.clearTint(); this.player.setPosition(this.cameras.main.scrollX + 120, GAME_HEIGHT-150); });
+    if(this.lives <= 0) this.gameOver();
+  }
+
+  updateCoins(amount){
+    this.coinsCollected += amount/10;
+    this.score += amount;
+    document.getElementById('coins').innerText = this.coinsCollected;
+    if(this.coinsCollected >= (this.level * 15)){
+      this.levelUp();
+    }
+  }
+
+  levelUp(){
+    this.level += 1;
+    document.getElementById('level').innerText = this.level;
+    this.speed += 40;
+    if(this.obstacleTimer){ this.obstacleTimer.remove(false); }
+    this.obstacleTimer = this.time.addEvent({ delay: Math.max(1000, 2800 - (this.level*150)), loop:true, callback: ()=> this.spawnMovingSpike() });
+    this.cameras.main.flash(300, 180, 240, 120);
+  }
+
+  updateHUD(){
+    document.getElementById('coins').innerText = this.coinsCollected;
+    document.getElementById('level').innerText = this.level;
+    document.getElementById('lives').innerText = this.lives;
+  }
+
+  gameOver(){
+    this.isGameOver = true;
+    document.getElementById('centerText').innerHTML = '<h2>GAME OVER</h2><p>Score: '+this.score+'</p>';
+    document.getElementById('centerMsg').style.display = 'block';
+    this.physics.world.pause();
+    if(this.obstacleTimer) this.obstacleTimer.remove(false);
+    document.getElementById('restartBtn').onclick = ()=> location.reload();
+  }
+
+  update(time, delta){
+    if(this.isGameOver) return;
+    let vx = 0;
+    if(this.cursors.left.isDown) vx = -this.speed;
+    else if(this.cursors.right.isDown) vx = this.speed;
+    if(this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.A).isDown) vx = -this.speed;
+    if(this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.D).isDown) vx = this.speed;
+    this.player.setVelocityX(vx);
+    if(vx === 0) this.player.setVelocityX(120);
+    if((this.cursors.up.isDown || this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.W).isDown) && this.player.body.onFloor()){
+      this.player.setVelocityY(-420);
+    }
+    this.obstacles.children.iterate((c)=>{
+      if(!c) return;
+      if(c.x < this.cameras.main.scrollX - 200) c.destroy();
+    });
+  }
+
+}
+
+const cfg = {
+  type: Phaser.AUTO,
+  width: GAME_WIDTH,
+  height: GAME_HEIGHT,
+  parent: 'game-container',
+  backgroundColor: '#071127',
+  physics: { default:'arcade', arcade:{ gravity:{ y: 1000 }, debug:false }},
+  scene: [BootScene, TitleScene, GameScene]
+};
+
+window.addEventListener('load', ()=>{
+  try { new Phaser.Game(cfg); } catch(e) { console.error(e); alert('Erro ao iniciar o jogo: '+e.message); }
+});
+
+</script>
+</body>
+</html>
