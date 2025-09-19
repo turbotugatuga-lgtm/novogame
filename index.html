@@ -27,13 +27,13 @@ const GAME_WIDTH = 800, GAME_HEIGHT = 480;
 
 class BootScene extends Phaser.Scene {
   constructor(){ super('BootScene'); }
-  preload(){
-    // 🎨 Sprites embutidos em base64
-    this.load.image('background','data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAoAAAAHgCAYAAAA10dzk...'); 
-    this.load.spritesheet('tuga','data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAGAAAABgCAYAAADimH0...',{frameWidth:96,frameHeight:96});
-    this.load.image('coin','data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAYAAACqaXHe...'); 
-    this.load.image('tile','data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAIAAAAAgCAYAAADaInAl...');
-  }
+  preload() {
+  this.textures.addBase64('background', 'data:image/png;base64,...');
+  this.textures.addBase64('tuga', 'data:image/png;base64,...');
+  this.textures.addBase64('coin', 'data:image/png;base64,...');
+  this.textures.addBase64('tile', 'data:image/png;base64,...');
+}
+
   create(){ this.scene.start('TitleScene'); }
 }
 
