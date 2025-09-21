@@ -1,168 +1,400 @@
 <!doctype html>
-<html lang="pt-BR">
+<html lang="en">
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Turbo Tuga — Demo</title>
+<title>Turbo Tuga — Promo Game</title>
+<link rel="icon" href="data:,">
 <style>
-  html,body {height:100%;margin:0;background:#071127;font-family:Arial,Helvetica,sans-serif}
-  #game-container {width:100%;height:100vh;display:flex;align-items:center;justify-content:center}
-  canvas{display:block;margin:0 auto}
-  .ui { position: fixed; left: 12px; top: 12px; color:#fff; font-weight:700; text-shadow:0 1px 0 #000; }
+  html,body {height:100%;margin:0;background:#071127;font-family:Inter, Arial, Helvetica, sans-serif;}
+  #game-container {width:100%;height:100vh;display:flex;align-items:center;justify-content:center;overflow:hidden}
+  canvas {display:block}
+  .ui { position: fixed; left: 12px; top: 12px; color:#fff; font-weight:700; text-shadow:0 1px 0 #000; z-index:1000}
   .ui .score { font-size:18px; }
-  .ui .level { font-size:14px; opacity:0.9; }
-  .topright { position: fixed; right: 12px; top: 12px; color:#fff; }
-  .center-msg { position: fixed; left:50%; top:50%; transform:translate(-50%,-50%); color:#fff; text-align:center; display:none; }
-  .btn { background:#2b8a3e; padding:10px 16px; border-radius:8px; cursor:pointer; display:inline-block; margin-top:8px; }
+  .ui .level { font-size:14px; opacity:0.95; margin-top:6px; }
+  .topright { position: fixed; right: 12px; top: 12px; color:#fff; z-index:1000; text-align:right }
+  .center-msg { position: fixed; left:50%; top:50%; transform:translate(-50%,-50%); color:#fff; text-align:center; display:none; z-index:1001 }
+  .btn { background:#1e8a3d; padding:12px 18px; border-radius:10px; cursor:pointer; display:inline-block; margin-top:12px; font-weight:800; box-shadow: 0 6px 0 #0f5b26; }
+  .btn:active { transform: translateY(2px); box-shadow: 0 4px 0 #0f5b26; }
+  #walletInput { padding:10px; font-size:16px; width:320px; border-radius:8px; border:2px solid rgba(255,255,255,0.12); }
+  .small { font-size:13px; opacity:0.95; }
+  #distributeBtn { background:#ff9900; box-shadow: 0 6px 0 #b26b00; color:#111; }
+  @media (max-width:700px) {
+    #walletInput { width:82vw; }
+    .btn { padding:10px 14px; }
+  }
 </style>
 </head>
 <body>
 <div id="game-container"></div>
-<div class="ui"><div class="score">Coins: <span id="coins">0</span></div><div class="level">Level: <span id="level">1</span></div></div>
-<div class="topright"><div class="score">Lives: <span id="lives">3</span></div></div>
-<div class="center-msg" id="centerMsg"><div id="centerText"></div><div class="btn" id="restartBtn">Restart</div></div>
 
-<!-- Phaser from CDN (replace with local phaser.min.js if you prefer) -->
+<div class="ui">
+  <div class="score">Coins: <span id="coins">0</span></div>
+  <div class="level">Level: <span id="level">1</span></div>
+</div>
+
+<div class="topright">
+  <div class="score">Lives: <span id="lives">3</span></div>
+  <div class="small" style="margin-top:8px">Token: <strong>TURBO-TUGA</strong></div>
+</div>
+
+<div class="center-msg" id="centerMsg">
+  <div id="centerText"></div>
+  <div style="margin-top:12px">
+    <div class="btn" id="restartBtn">Restart</div>
+  </div>
+</div>
+
+<!-- Phaser 3.60 from CDN -->
 <script src="https://unpkg.com/phaser@3.60.0/dist/phaser.min.js"></script>
 
 <script>
-const BG_DATA = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAyAAAAJYCAIAAAAVFBUnAAAKtklEQVR4nO3YQQ2AMAAEQYqUmuWBN4zUBCY2adLMKLjn5sbzrQsAgM69ewAAwGkEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMQEFgBATGABAMTGfOfuDQAAR/FgAQDEBBYAQExgAQDEBBYAQExgAQDEBBYAQExgAQDEBBYAQExgAQDEBBYAQExgAQDEBBYAQExgAQDEBBYAQExgAQDEBBYAQExgAQDEBBYAQExgAQDEBBYAQExgAQDEBBYAQExgAQDEBBYAQExgAQDEBBYAQExgAQDEBBYAQExgAQDEBBYAQExgAQDEBBYAQExgAQDEBBYAQExgAQDEBBYAQExgAQDEBBYAQExgAQDEBBYAQExgAQDEBBYAQExgAQDEBBYAQExgAQDEBBYAQExgAQDEBBYAQExgAQDEBBYAQExgAQDEBBYAQExgAQDEBBYAQExgAQDEBBYAQExgAQDEBBYAQExgAQDEBBYAQExgAQDEBBYAQExgAQDEBBYAQExgAQDEBBYAQExgAQDEBBYAQExgAQDEBBYAQExgAQDEBBYAQExgAQDEBBYAQExgAQDEBBYAQExgAQDEBBYAQExgAQDEBBYAQExgAQDEBBYAQExgAQDEBBYAQExgAQDEBBYAQExgAQDEBBYAQExgAQDEBBYAQExgAQDEBBYAQExgAQDEBBYAQExgAQDEBBYAQExgAQDEBBYAQExgAQDEfl8VB74LMlrvAAAAAElFTkSuQmCC";
-const COIN_DATA = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAIAAAACACAYAAADDPmHLAAAD20lEQVR4nO2dy3HeMAwGkVTiS1JA2kl9accFOBd3kpw049H8kvjAi8Tu3WMK3wqgJI8pAgAAAAAAAAAAAPvzLXoBHnz8efs3+rM/f39uXaPtLm4m7FZ2kmL5C/EI/ImVhVhy4RlCv2I1GZZabObgz6wiwhKLXCn4M9lFSL04zeB//Prs/pm/729avz6tCCkXNRP8SNC9zIiRTYRUixkN3iP0K0ZlyCJCikWI9IcfGfoVvTJkkCB8ASJ94WcM/kyPCNEShP7y3YI/s4IIYQK0hr9i8GdaRYiQIESAlvB3CP5MiwjeEnz3/GUidcMXabsu75dergJUDv8gmwRu7ebponYP/hVPI8FjHLh0AMJ/zdN1e3QCcwEI/55oCUwFIPw2IiUwE4Dw+4iSwEQAwh8jQgL39wCEf493fdQFuLOU8Nu4q5N2F1AVgPD18JJATYCV/25vRbTq7bIH4O4fw6NuKgLQ+u2wHgWmHYDwdbCs47QAzP5YZutv1gG4+3WxqueUANz9OZjJwaQDcPfbYFHXYQG4+3Mxmod6B+Dut0W7vkMCcPfnZCQX1Q7A3e+DZp3dPwdDLroFoP3npjcftQ5A+/dFq96MgOIgQHG6BLiaL7T/GK7q3rMPoAMUBwGKgwDFQYDiNAvAC6C1aM1rugPwBBDLbP0ZAcVBgOIgQHEQoDgIUBwEKA4CFAcBioMAxUGA4iBAcRCgONMCaB6tBv3M1r9ZgOizbaCP1rwYAcVBgOIgQHEQoDhdAlxtLHgSiOGq7j0bdjpAcRCgOGoCMAZ80ap3twC8EMpNbz6MgOKoCsAY8EGzzkMCMAZyMpKL+gigC9iiXd9hAegCuRjNw2QTSBewwaKuUwLQBXIwk4PZYyBdQBerek4LQBeIZbb+pi+C6AI6WNZRRYA7C5Fgjrv6aXRfl1fBSDCGR93UBGAv4ItWvVU7AKNAD+vWf6A+ApBgHq/wRQI+ByPBPd71MRHgyVIkeM1TXSz2WWYdAAn6iAhfxHgEIEEbUeGLOOwBkOCeyPBFnDaBSPCa6PBFRFxf3rT8B+sK/3y6RXivF2uuj4EtF7V7N8gUvkjAe4DKEmQLX8R5BHyl9UCDHUZCq9AR31NCP+D0nEKyogg9nSzqY1qKL3i7ibBC8AcpBBDpP5Moowi9e5fo8EUSCSAyfjBVpAyjG9YM4YskE+Bg5oQyDxlmnlKyBH+QajFnNI+qGxFD83E0W/AHKRd1ZuUzC7MGf5B6cWdWEiF78AdLLPJMZhFWCf5gqcW+IoMMq4X+lWUXfoWHECsHfmabC7ljRoqdwgYAAAAAAAAAgML8B6Dtr83slVZ8AAAAAElFTkSuQmCC";
-const TUGA_DATA = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAIAAAACACAYAAADDPmHLAAABq0lEQVR4nO3dy2qDQABAUaf0/3/ZrgLB2kZDcIR7ztIXwtzxtXGsy7IuZH3NPgHmEkCcAOIEECeAOAHECSBOAHECiBNAnADiBBAngDgBxAkgTgBxAogTQJwA4gQQJ4A4AcQJIE4AcQKIE0CcAOIEECeAOAHECSBOAHECiBNAnADiBBAngDgBxAkgTgBxAogTQJwA4gQQJ4A4AcQJIE4AcQKIE0CcAOIEEPd9eMt1599SY3zwVJhhnPpr2COCMX4H8bzsEcbe9tt9RTTV+7eAMf4fvFeDv42EKa5/BjDwt3J9ANsrAFMdD+B5xu7dw7frX830v47Hpc49BL7LrL+t46+BZ+29JXA711wBuC1fAuMEECeAOAHECSBOAHECiBNAnADiBBAngDgBxAkgTgBxAogTQJwA4gQQJ4A4AcQJIE4AcQKIE0CcAOIEECeAOAHECSBOAHECiBNAnADiBBAngDgBxAkgTgBxAogTQJwA4gQQJ4A4AcQJIE4AcQKIE0CcAOIEECeAOAHECSBOAHECiBNAnADiBBAngDgBxAkgTgBxAogTQJwA4gQQ9wMXkTTxyE8eOgAAAABJRU5ErkJggg==";
+/*
+Turbo Tuga — promo game
+- Title screen with Solana wallet input (text). This collects an address for display and for potential backend use.
+- Procedural art (drawn with Phaser Graphics) for background, coin, spikes and the turtle sprite.
+- Coins collectible, spikes obstacles, levels, lives, HUD.
+- "Distribute rewards" is simulated: it just shows an alert that rewards would be processed server-side.
+*/
 
-const GAME_WIDTH = 800, GAME_HEIGHT = 480;
-
+const GAME_WIDTH = 960;
+const GAME_HEIGHT = 540;
 
 class BootScene extends Phaser.Scene {
   constructor(){ super('BootScene'); }
-  preload(){
-    this.load.once('complete', ()=>{}, this);
+  preload() {
+    // no external image assets needed; everything will be generated at runtime
   }
-  create(){
-    this.textures.addBase64('background', BG_DATA);
-    this.textures.addBase64('coin', COIN_DATA);
-    this.textures.addBase64('tuga', TUGA_DATA);
+  create() {
+    // create procedural textures used across scenes
+    this.createBackgroundTexture();
+    this.createCoinTexture();
+    this.createTurtleFrames();
     this.scene.start('TitleScene');
+  }
+
+  createBackgroundTexture(){
+    // draw a simple 3-layer parallax background as textures
+    const rt = this.textures.createCanvas('bg', GAME_WIDTH, GAME_HEIGHT);
+    const ctx = rt.getContext();
+
+    // sky gradient
+    const grad = ctx.createLinearGradient(0,0,0,GAME_HEIGHT);
+    grad.addColorStop(0, '#7AD3FF');
+    grad.addColorStop(0.6, '#66C2FF');
+    grad.addColorStop(1, '#80D28A');
+    ctx.fillStyle = grad;
+    ctx.fillRect(0,0,GAME_WIDTH,GAME_HEIGHT);
+
+    // clouds (simple)
+    ctx.fillStyle = 'rgba(255,255,255,0.95)';
+    for(let i=0;i<6;i++){
+      let cx = 60 + i*160 + (i%2)*40;
+      let cy = 70 + (i%3)*30;
+      ctx.beginPath();
+      ctx.ellipse(cx, cy, 36, 24, 0, 0, Math.PI*2);
+      ctx.fill();
+      ctx.beginPath();
+      ctx.ellipse(cx+30, cy+6, 34, 22, 0, 0, Math.PI*2);
+      ctx.fill();
+    }
+
+    // distant mountains (simple polygon)
+    ctx.fillStyle = '#3A9A63';
+    ctx.beginPath();
+    ctx.moveTo(0,GAME_HEIGHT*0.6);
+    ctx.lineTo(180,GAME_HEIGHT*0.35);
+    ctx.lineTo(320,GAME_HEIGHT*0.62);
+    ctx.lineTo(500,GAME_HEIGHT*0.4);
+    ctx.lineTo(760,GAME_HEIGHT*0.62);
+    ctx.lineTo(GAME_WIDTH,GAME_HEIGHT*0.48);
+    ctx.lineTo(GAME_WIDTH,GAME_HEIGHT);
+    ctx.lineTo(0,GAME_HEIGHT);
+    ctx.closePath();
+    ctx.fill();
+
+    this.textures.addCanvas('bg', rt.canvas);
+  }
+
+  createCoinTexture(){
+    // create a circular coin texture
+    const g = this.make.graphics({x:0,y:0,add:false});
+    g.fillStyle(0xFFCC00,1);
+    g.fillCircle(24,24,20);
+    g.lineStyle(4, 0xD79400, 1);
+    g.strokeCircle(24,24,20);
+    g.fillStyle(0xE6AA00,1);
+    g.fillRect(10,18,24,8);
+    g.generateTexture('coin',48,48);
+    g.destroy();
+  }
+
+  createTurtleFrames(){
+    // create a small spritesheet of 3 frames for a running turtle via graphics
+    // We'll draw simple stylized turtle with helmet and shell; frames differ slightly to simulate run.
+    const width = 120, height = 120;
+    const rt = this.textures.createCanvas('turtle_spritesheet', width*3, height);
+    const ctx = rt.getContext();
+
+    for(let f=0; f<3; f++){
+      const ox = f*width;
+      // clear rect
+      ctx.clearRect(ox,0,width,height);
+
+      // body color
+      ctx.fillStyle = '#49C05A';
+      // torso
+      ctx.beginPath();
+      ctx.ellipse(ox+60, 70, 36 + (f===1?2:0), 28 + (f===2?2:0), 0, 0, Math.PI*2);
+      ctx.fill();
+
+      // shell
+      ctx.fillStyle = '#8B4E24';
+      ctx.beginPath();
+      ctx.ellipse(ox+60, 45, 44, 30, 0, 0, Math.PI*2);
+      ctx.fill();
+      ctx.fillStyle = '#C96F1B';
+      ctx.fillRect(ox+32,30,56,16);
+
+      // helmet
+      ctx.fillStyle = '#E33A2B';
+      ctx.beginPath();
+      ctx.arc(ox+72, 28, 22, Math.PI*1.1, Math.PI*2.1);
+      ctx.fill();
+      // visor
+      ctx.fillStyle = '#0B2B3A';
+      ctx.fillRect(ox+56,23,28,10);
+      // eye smile
+      ctx.fillStyle = '#072';
+      ctx.beginPath();
+      ctx.arc(ox+48, 32, 4, 0, Math.PI*2); ctx.fill();
+
+      // leg (simulate movement by offset)
+      ctx.fillStyle = '#49C05A';
+      const backLegY = 92 + (f===1?2:0);
+      ctx.beginPath();
+      ctx.ellipse(ox+36, backLegY, 12, 8, 0, 0, Math.PI*2);
+      ctx.fill();
+      const frontLegY = 92 - (f===2?4:0);
+      ctx.beginPath();
+      ctx.ellipse(ox+84, frontLegY, 12, 8, 0, 0, Math.PI*2);
+      ctx.fill();
+
+      // small dust puff
+      ctx.fillStyle = 'rgba(240,240,240,0.9)';
+      ctx.beginPath();
+      ctx.ellipse(ox+22, 95, 6 + f, 4 + f/2, 0, 0, Math.PI*2);
+      ctx.fill();
+    }
+    this.textures.addCanvas('turtle_spritesheet', rt.canvas);
+    // define frames programmatically using Frame names below in game code
   }
 }
 
 class TitleScene extends Phaser.Scene {
   constructor(){ super('TitleScene'); }
   create(){
-    this.add.image(GAME_WIDTH/2,GAME_HEIGHT/2,'background').setDisplaySize(GAME_WIDTH,GAME_HEIGHT);
-    this.add.text(GAME_WIDTH/2,60,'TURBO TUGA',{ fontFamily:'Arial', fontSize:'48px', color:'#ffd166' }).setOrigin(0.5);
-    this.add.text(GAME_WIDTH/2,120,'Um jogo demonstrativo para divulgar o token',{ fontSize:'18px', color:'#fff' }).setOrigin(0.5);
-    const start = this.add.text(GAME_WIDTH/2,GAME_HEIGHT-120,'START',{ fontSize:'28px', backgroundColor:'#2b8a3e', padding:10, color:'#fff' }).setOrigin(0.5).setInteractive();
-    start.on('pointerup', ()=> this.scene.start('GameScene',{level:1}) );
+    // Background
+    this.add.image(0,0,'bg').setOrigin(0).setDisplaySize(GAME_WIDTH,GAME_HEIGHT);
+
+    // Title text
+    this.add.text(GAME_WIDTH/2, 70, 'TURBO TUGA', { fontFamily:'monospace', fontSize:'56px', color:'#ffd166', stroke:'#4d2d00', strokeThickness:8 }).setOrigin(0.5);
+
+    // subtitle
+    this.add.text(GAME_WIDTH/2, 130, 'Collect coins to win TURBO-TUGA tokens!', { fontSize:'20px', color:'#fff' }).setOrigin(0.5);
+
+    // Wallet input DOM element (Solana address)
+    const walletInput = document.createElement('input');
+    walletInput.id = 'walletInput';
+    walletInput.type = 'text';
+    walletInput.placeholder = 'Enter Solana wallet address (for prize distribution)';
+    walletInput.style.position = 'fixed';
+    walletInput.style.left = '50%';
+    walletInput.style.top = '190px';
+    walletInput.style.transform = 'translateX(-50%)';
+    walletInput.style.zIndex = 1000;
+    document.body.appendChild(walletInput);
+
+    // Start button
+    const startBtn = this.add.text(GAME_WIDTH/2, GAME_HEIGHT - 110, 'START GAME', { fontSize:'28px', color:'#fff', backgroundColor:'#1e8a3d', padding:12, align:'center' }).setOrigin(0.5).setInteractive();
+    startBtn.on('pointerup', () => {
+      const addr = walletInput.value.trim();
+      if(!addr) {
+        // allow starting without wallet entry but confirm (we prefer address)
+        if(!confirm('No wallet entered. You can still play, but you won\\'t be eligible for rewards. Start anyway?')) return;
+      }
+      // store wallet to sessionStorage so results can be shown; real distribution needs server
+      sessionStorage.setItem('tuga_wallet', addr || '');
+      walletInput.remove();
+      this.scene.start('GameScene', { level: 1, wallet: addr || '' });
+    });
+
+    // small note
+    this.add.text(GAME_WIDTH/2, GAME_HEIGHT - 60, 'By entering your wallet you agree to prize rules (demo).', { fontSize:'14px', color:'#fff', alpha:0.88 }).setOrigin(0.5);
+  }
+
+  shutdown(){
+    // remove wallet input if scene ends unexpectedly
+    const el = document.getElementById('walletInput');
+    if(el) el.remove();
   }
 }
 
 class GameScene extends Phaser.Scene {
   constructor(){ super('GameScene'); }
-  init(data){ this.level = data.level || 1; }
+  init(data){
+    this.level = data.level || 1;
+    this.playerWallet = data.wallet || sessionStorage.getItem('tuga_wallet') || '';
+  }
+
   create(){
-    this.bg = this.add.image(0,0,'background').setOrigin(0).setDisplaySize(GAME_WIDTH,GAME_HEIGHT);
-    const worldWidth = 5000;
-    this.physics.world.setBounds(0,0,worldWidth,GAME_HEIGHT);
-    this.cameras.main.setBounds(0,0,worldWidth,GAME_HEIGHT);
-    this.platforms = this.physics.add.staticGroup();
-    for(let i=0;i<Math.ceil(worldWidth/80);i++) {
-      let x = i*80;
-      let rect = this.add.rectangle(x, GAME_HEIGHT-32, 80, 64, 0x228B22).setOrigin(0,0);
+    // procedural background and ground
+    this.add.image(0,0,'bg').setOrigin(0).setDisplaySize(GAME_WIDTH,GAME_HEIGHT);
+
+    // world & camera
+    this.worldWidth = 6000;
+    this.physics.world.setBounds(0,0,this.worldWidth,GAME_HEIGHT);
+    this.cameras.main.setBounds(0,0,this.worldWidth,GAME_HEIGHT);
+
+    // ground tiles (rectangle blocks)
+    this.ground = this.physics.add.staticGroup();
+    for(let i=0;i<Math.ceil(this.worldWidth/120); i++){
+      const x = i*120;
+      const rect = this.add.rectangle(x, GAME_HEIGHT - 72, 120, 120, 0x1f9a3a).setOrigin(0,0);
       this.physics.add.existing(rect, true);
-      this.platforms.add(rect);
+      this.ground.add(rect);
     }
-    const g = this.add.graphics();
-    g.fillStyle(0x888888);
-    let spikeW = 32, spikeH = 32;
-    g.clear();
-    g.fillTriangle(0,spikeH, spikeW/2,0, spikeW,spikeH);
-    g.generateTexture('spike', spikeW, spikeH);
-    g.clear();
-    this.player = this.physics.add.sprite(120, GAME_HEIGHT-150, 'tuga').setScale(0.9);
+
+    // generate spike texture already created in BootScene as 'spike' via graphics? If not, create one
+    if(!this.textures.exists('spike')) {
+      const g = this.add.graphics();
+      g.fillStyle(0x888888,1);
+      g.fillTriangleShape(new Phaser.Geom.Triangle(0,32,16,0,32,32));
+      g.generateTexture('spike', 32, 32);
+      g.destroy();
+    }
+
+    // create turtle sprite using the turtle_spritesheet canvas texture
+    const frameWidth = 120;
+    // create frames from canvas
+    if(!this.anims.anims.entries['turtle-run']) {
+      for(let i=0;i<3;i++){
+        this.textures.addCanvas('turtle_frame_' + i, this.textures.get('turtle_spritesheet').getSourceImage().getContext ? this.textures.get('turtle_spritesheet').getSourceImage() : this.textures.get('turtle_spritesheet').source[0].image);
+        // We'll use the same canvas and draw it to an offscreen canvas to cut frames; Phaser's Canvas Texture is tricky so we'll use an easier approach:
+      }
+      // Instead of slicing via textures, we'll use RenderTexture to copy frame rectangles into actual textures.
+      const baseCanvas = this.textures.get('turtle_spritesheet').getSourceImage();
+      // create frames as textures by copying
+      for(let f=0; f<3; f++){
+        const rt = this.add.renderTexture(0,0,120,120);
+        rt.draw(baseCanvas, -120*f, 0);
+        rt.saveTexture('turtle_frame_' + f);
+        rt.destroy();
+      }
+      this.anims.create({
+        key: 'run',
+        frames: [
+          { key: 'turtle_frame_0' },
+          { key: 'turtle_frame_1' },
+          { key: 'turtle_frame_2' }
+        ],
+        frameRate: 10,
+        repeat: -1
+      });
+    } // end anim creation
+
+    // add player as sprite using first frame texture
+    this.player = this.physics.add.sprite(140, GAME_HEIGHT - 160, 'turtle_frame_0').setScale(0.9);
     this.player.setCollideWorldBounds(true);
-    this.player.body.setSize(this.player.width*0.6, this.player.height*0.8, true);
-    this.physics.add.collider(this.player, this.platforms);
-    this.tween = this.tweens.add({ targets: this.player, y: '+=4', duration: 220, yoyo:true, repeat:-1, ease:'Sine.easeInOut' });
+    this.player.body.setSize(this.player.width*0.6, this.player.height*0.7, true);
+    this.physics.add.collider(this.player, this.ground);
+    this.player.play('run');
+
+    // coins group (use texture 'coin')
     this.coins = this.physics.add.group();
-    this.spawnCoins(25);
-    this.physics.add.overlap(this.player, this.coins, (p,c)=>{ c.disableBody(true,true); this.updateCoins(10); }, null, this);
-    this.obstacles = this.physics.add.group({ allowGravity:false });
-    this.spawnSpikes(18);
-    this.physics.add.collider(this.player, this.obstacles, ()=> this.playerHit(), null, this);
-    this.cameras.main.startFollow(this.player, true, 0.08, 0.08);
+    this.spawnCoins(40);
+
+    this.physics.add.overlap(this.player, this.coins, (p, c) => {
+      c.disableBody(true, true);
+      this.collectCoin();
+    });
+
+    // obstacles (spikes)
+    this.obstacles = this.physics.add.group({ allowGravity:false, immovable:true });
+    this.spawnSpikes(30);
+
+    this.physics.add.collider(this.player, this.obstacles, () => this.hitSpike(), null, this);
+
+    // camera
+    this.cameras.main.startFollow(this.player, true, 0.1, 0.1);
     this.cameras.main.setZoom(1);
+
+    // inputs
     this.cursors = this.input.keyboard.createCursorKeys();
-    this.score = 0;
+    this.keyA = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.A);
+    this.keyD = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.D);
+    this.keyW = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.W);
+
+    // game state
     this.coinsCollected = 0;
     this.lives = 3;
-    this.updateHUD();
+    this.score = 0;
     this.isGameOver = false;
-    this.speed = 200 + (this.level-1)*40;
-    this.obstacleTimer = this.time.addEvent({ delay: 2800 - (this.level*150), loop:true, callback: ()=> this.spawnMovingSpike() });
-    this.add.text(10, GAME_HEIGHT-22, '← → ou teclas A/D para mover, ↑ para pular', { fontSize:'12px', color:'#fff' }).setScrollFactor(0);
+    this.level = 1;
+    this.updateHUD();
+
+    // show small HUD hint
+    this.add.text(12, GAME_HEIGHT - 28, 'Controls: ← → or A/D to move, ↑ or W to jump', { fontSize: 12, color:'#ffffff' }).setScrollFactor(0).setDepth(10);
+
+    // distribute rewards button (simulated)
+    this.createRewardPanel();
   }
 
   spawnCoins(n){
-    const startX = 400;
+    const start = 400;
     for(let i=0;i<n;i++){
-      let x = startX + i * Phaser.Math.Between(120, 220);
-      let y = GAME_HEIGHT - Phaser.Math.Between(140, 220);
-      let c = this.coins.create(x,y,'coin').setScale(1).setDepth(2);
+      const x = start + i * Phaser.Math.Between(120, 220);
+      const y = GAME_HEIGHT - Phaser.Math.Between(150, 260);
+      const c = this.coins.create(x,y,'coin');
+      c.setScale(0.9);
       c.body.setAllowGravity(false);
     }
   }
 
   spawnSpikes(n){
-    const startX = 600;
+    const start = 600;
     for(let i=0;i<n;i++){
-      let x = startX + i * Phaser.Math.Between(160, 360);
-      let y = GAME_HEIGHT - 48 - 16;
-      let s = this.obstacles.create(x,y,'spike');
-      s.setOrigin(0.5,1);
-      s.body.setSize(32,32,true);
+      const x = start + i * Phaser.Math.Between(180, 420);
+      const s = this.obstacles.create(x, GAME_HEIGHT - 84, 'spike');
+      s.setOrigin(0.5, 1);
       s.body.setImmovable(true);
     }
   }
 
-  spawnMovingSpike(){
-    let x = this.cameras.main.scrollX + GAME_WIDTH + 60;
-    let y = GAME_HEIGHT - 48 - 16;
-    let s = this.obstacles.create(x,y,'spike');
-    s.setOrigin(0.5,1);
-    s.body.setAllowGravity(false);
-    s.body.setImmovable(true);
-    s.body.setVelocityX(- (this.speed + Phaser.Math.Between(40,120)) );
-    s.checkWorldBounds = true;
-    s.outOfBoundsKill = true;
-  }
-
-  playerHit(){
-    if(this.isGameOver) return;
-    this.lives -= 1;
-    this.updateHUD();
-    this.cameras.main.flash(250, 255, 80, 80);
-    this.player.setTint(0xff6666);
-    this.time.delayedCall(600, ()=>{ this.player.clearTint(); this.player.setPosition(this.cameras.main.scrollX + 120, GAME_HEIGHT-150); });
-    if(this.lives <= 0) this.gameOver();
-  }
-
-  updateCoins(amount){
-    this.coinsCollected += amount/10;
-    this.score += amount;
+  collectCoin(){
+    this.coinsCollected += 1;
+    this.score += 10;
     document.getElementById('coins').innerText = this.coinsCollected;
-    if(this.coinsCollected >= (this.level * 15)){
+    if(this.coinsCollected > 0 && this.coinsCollected % 15 === 0){
       this.levelUp();
     }
   }
 
   levelUp(){
-    this.level += 1;
+    this.level++;
     document.getElementById('level').innerText = this.level;
-    this.speed += 40;
-    if(this.obstacleTimer){ this.obstacleTimer.remove(false); }
-    this.obstacleTimer = this.time.addEvent({ delay: Math.max(1000, 2800 - (this.level*150)), loop:true, callback: ()=> this.spawnMovingSpike() });
-    this.cameras.main.flash(300, 180, 240, 120);
+    // small celebration
+    this.cameras.main.shake(300, 0.01);
+  }
+
+  hitSpike(){
+    if(this.isGameOver) return;
+    this.lives--;
+    document.getElementById('lives').innerText = this.lives;
+    this.player.setTint(0xff6666);
+    this.time.delayedCall(400, ()=> this.player.clearTint());
+    this.player.setPosition(this.cameras.main.scrollX + 140, GAME_HEIGHT - 160);
+    if(this.lives <= 0) this.endGame();
   }
 
   updateHUD(){
@@ -171,47 +403,96 @@ class GameScene extends Phaser.Scene {
     document.getElementById('lives').innerText = this.lives;
   }
 
-  gameOver(){
-    this.isGameOver = true;
-    document.getElementById('centerText').innerHTML = '<h2>GAME OVER</h2><p>Score: '+this.score+'</p>';
-    document.getElementById('centerMsg').style.display = 'block';
-    this.physics.world.pause();
-    if(this.obstacleTimer) this.obstacleTimer.remove(false);
-    document.getElementById('restartBtn').onclick = ()=> location.reload();
+  createRewardPanel(){
+    // show small "Distribute rewards" button upper-left (DOM)
+    const panel = document.createElement('div');
+    panel.style.position='fixed';
+    panel.style.left='12px';
+    panel.style.bottom='12px';
+    panel.style.zIndex='1001';
+    panel.style.color='#fff';
+    panel.innerHTML = `<div style="font-size:13px;margin-bottom:8px">Prize distribution</div>
+      <div style="display:flex;gap:8px;align-items:center">
+        <input id="rewardAmt" placeholder="Amount (tokens)" style="padding:8px;border-radius:8px;border:2px solid rgba(255,255,255,0.08);font-size:14px;width:120px" />
+        <button id="distributeBtn" class="btn" style="background:#ff9900">Distribute</button>
+      </div>
+      <div style="font-size:12px;margin-top:6px;opacity:0.9">Note: This is a simulation. Implement server & Solana backend to send tokens.</div>`;
+    document.body.appendChild(panel);
+
+    document.getElementById('distributeBtn').onclick = ()=> {
+      const amt = (document.getElementById('rewardAmt').value||'').trim();
+      if(!amt || isNaN(Number(amt)) || Number(amt)<=0){
+        alert('Enter a numeric token amount to distribute (simulation).');
+        return;
+      }
+      // simulating — collect top N players (in this demo we only have one local player)
+      const wallet = this.playerWallet || sessionStorage.getItem('tuga_wallet') || '';
+      if(!wallet){
+        if(!confirm('No wallet stored for this session. Should we simulate distribution to a sample address?')) return;
+      }
+      // Show a simulated distribution result
+      alert('Simulated distribution: ' + amt + ' TURBO-TUGA tokens would be sent to: ' + (wallet || 'sample-wallet-addr'));
+      // In real deployment: call backend API that verifies winners & signs transactions server-side (or instructs user to sign in wallet).
+    };
   }
 
-  update(time, delta){
+  endGame(){
+    this.isGameOver = true;
+    // Show center Game Over overlay with wallet and stats
+    const overlay = document.getElementById('centerMsg');
+    document.getElementById('centerText').innerHTML = `<h2 style="margin:0">GAME OVER</h2>
+      <p style="margin:6px 0">Wallet: <strong>${this.playerWallet || '— not provided —'}</strong></p>
+      <p style="margin:6px 0">Coins collected: <strong>${this.coinsCollected}</strong></p>
+      <p style="margin:6px 0">Level reached: <strong>${this.level}</strong></p>`;
+    overlay.style.display='block';
+    this.physics.pause();
+  }
+
+  update(){
     if(this.isGameOver) return;
+
     let vx = 0;
-    if(this.cursors.left.isDown) vx = -this.speed;
-    else if(this.cursors.right.isDown) vx = this.speed;
-    if(this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.A).isDown) vx = -this.speed;
-    if(this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.D).isDown) vx = this.speed;
+    if(this.cursors.left.isDown || this.keyA.isDown) vx = -220;
+    else if(this.cursors.right.isDown || this.keyD.isDown) vx = 220;
+
+    // ensure slight auto-right movement if player idle (gives runner feel)
+    if(vx === 0) vx = 120;
+
     this.player.setVelocityX(vx);
-    if(vx === 0) this.player.setVelocityX(120);
-    if((this.cursors.up.isDown || this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.W).isDown) && this.player.body.onFloor()){
-      this.player.setVelocityY(-420);
+
+    if((this.cursors.up.isDown || this.keyW.isDown) && this.player.body.onFloor()){
+      this.player.setVelocityY(-480);
     }
-    this.obstacles.children.iterate((c)=>{
-      if(!c) return;
-      if(c.x < this.cameras.main.scrollX - 200) c.destroy();
+
+    // play run animation (swapping frames textures)
+    if(this.player.anims){
+      // already playing
+    } else {
+      // fallback: manually cycle frame textures (should not reach here due to anim creation)
+    }
+
+    // Remove old obstacles/coins that went too far left
+    this.coins.children.iterate(c => {
+      if(c && c.x < this.cameras.main.scrollX - 200) c.destroy();
+    });
+    this.obstacles.children.iterate(o => {
+      if(o && o.x < this.cameras.main.scrollX - 300) o.destroy();
     });
   }
-
 }
 
-const cfg = {
+const config = {
   type: Phaser.AUTO,
   width: GAME_WIDTH,
   height: GAME_HEIGHT,
   parent: 'game-container',
   backgroundColor: '#071127',
-  physics: { default:'arcade', arcade:{ gravity:{ y: 1000 }, debug:false }},
-  scene: [BootScene, TitleScene, GameScene]
+  physics: { default: 'arcade', arcade: { gravity: { y: 1000 }, debug: false } },
+  scene: [ BootScene, TitleScene, GameScene ]
 };
 
-window.addEventListener('load', ()=>{
-  try { new Phaser.Game(cfg); } catch(e) { console.error(e); alert('Erro ao iniciar o jogo: '+e.message); }
+window.addEventListener('load', () => {
+  const game = new Phaser.Game(config);
 });
 
 </script>
